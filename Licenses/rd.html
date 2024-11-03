@@ -1,0 +1,127 @@
+<a href="https://mp.weixin.qq.com/s/ycpi-ilZYwl_VAw4kyOelQ?scene=25#wechat_redirect" >https://mp.weixin.qq.com/s/ycpi-ilZYwl_VAw4kyOelQ?scene=25#wechat_redirect</a>
+
+QuasarRAT样本的本地行为分析
+新华三聆风实验室 新华三主动安全 2024年04月23日 19:17 北京
+以下述QuasarRAT样本为例：
+
+原始文件名
+
+Nvidia.exe
+
+MD5
+
+8c35af10c4c91df81b4a55084f4a836d
+
+文件大小
+
+3.12 MB (3273216 字节)
+
+文件类型
+
+PE32.exe
+
+时间戳
+
+2023-03-12 16:16:39
+
+编译信息
+
+Linker: Microsoft Linker (8.0)
+
+执行
+将Quasar实际载荷(Client.exe)释放到路径C:\Users\admin\AppData\Roaming\SubDir\中
+
+图片图 1复制载荷
+
+持久化
+Quasar使用了两种方法进行持久化，如果客户端已经获得管理员权限则，则通过schtasks生成计划任务。计划任务的名称通常由生成时确定。如果没有获取管理员权限，则只会添加一个注册表项。
+
+图片图 2 持久化
+
+通过指令添加或删除注册表项
+
+图片图 3通过命令添加或删除注册表项
+
+发现
+获取宿主机相关信息，如IP地址，主机名，LAN ip地址，是否存在防火墙等。
+
+图片图 4获取信息列表
+
+图片图 5查找受害者地理位置
+
+图片图 6获取公共IP
+
+图片图 7获取主机名
+
+图片图 8获取LAN IP的代码
+
+图片图 9获取MAC ip的代码
+
+图片图 10查找防病毒信息
+
+图片图 11查找防火墙信息
+
+图片图 12查看BIOS详细信息
+
+图片图 13查看CPU名称
+
+图片图 14查询物理内存
+
+图片图 15查询GPU详细信息
+
+权限提升
+检查当前账号是否为管理员权限，如果不是则尝试以管理员权限重新启动程序。
+
+图片图 16提权
+
+凭证访问
+获取多个浏览器密码转储模块。
+
+图片图 17不同浏览器的密码转储模块
+
+图片图 18 Brave浏览器密码转储模块
+
+图片图 19Chrome浏览器密码转储模块
+
+图片图 20下载更新文件
+
+配置信息解密
+HOST存储方式如下，加密算法为AES加密
+
+图片图 21 HOST加密字符串
+
+图片图 22解密算法
+
+Input分为3部分，0x00-0x20存储为他的hash值，0x20-0x30存储的是解密所需IV值.
+
+示例：14605e930c723cdfa8455300f96feeabf182adba6e46cc06767d948154910c96
+
+经分析可知解密需要密文,key,IV值。
+
+图片图 23 key与IV值
+
+确定IV值。密文是输入信息，IV值是包含在密文的，key=Byte_0
+
+图片图 24 key值
+
+key,byte_2通过Rfc2898DeriveBytes生成密钥。key,byte_2都是用户定义的字符串，可以直接获得。
+
+图片图 25 密钥生成
+
+定位IV值，与密文的字节进行对比，确定IV值存储在0x20-0x30中。
+
+图片图 26 IV值
+
+查看解密后的C2
+
+图片图 27 C2信息
+
+相关IOC
+
+1e4c7c35a5a1fe7ec324afbab4ec16318839a87f3512b2151487dda3854d40e2
+19a57e2e5ecddfa1ff08e614a9d9c543640d1351c126ab86d1b0d21639067d82
+8d9f0e8c11ca559039ec1da2b563442eda513db6674071b6f141bef8b10f8367
+14605e930c723cdfa8455300f96feeabf182adba6e46cc06767d948154910c96
+b94be0c8c287fcbbff923f03a6baa38eeecbadcd0a428dcadbf68a24201914fa
+
+bideo.duckdns.org:20
